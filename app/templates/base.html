@@ -1,0 +1,94 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+    <link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}" type="image/x-icon">
+	<link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" type="image/x-icon">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='main.css') }}">
+
+   {% block title %}{% endblock %}
+</head>
+
+<body>
+	<header class="site-header">
+			<nav class="navbar navbar-expand-md navbar-dark bg-steel fixed-top" >
+				<div class="container">
+					<a class="navbar-brand mr-4" href="{{ url_for('main.index') }}">Flasky</a>
+					<button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarToggle" aria-controls="navbarToggle" aria-expanded="false" aria-label="Toggle navigation">
+						<span class="navbar-toggler-icon"></span>
+					</button>
+
+					<div class="navbar-collapse collapse">
+						<div class="nav navbar-nav mr-auto">
+							<a class="nav-item nav-link" href="{{ url_for('main.index') }}">Home</a>
+							{% if current_user.is_authenticated %}
+							<a class="nav-item nav-link" href="{{ url_for('main.user', username=current_user.username) }}">Profile</a>
+							{% endif %}
+						</div>
+					</div>
+
+					<ul class="nav navbar-nav">	
+					{% if current_user.can(Permission.MODERATE) %}
+						<li><a href="{{ url_for('main.moderate') }}">Moderate Comments</a></li>
+						{% endif %}
+						{% if current_user.is_authenticated %}
+						<li class="dropdown">
+							<a href="#" class="dropdown-toggle nav-item nav-link" data-toggle="dropdown">
+								<img src="{{ current_user.gravatar(size=18) }}">
+								Account <b class="caret"></b>
+							</a>
+							<ul class="dropdown-menu" role="menu" aria-labelledby="dropdownMenu1">
+								<li role="presentation">
+									<a class="dropdown-item" href="{{ url_for('auth.change_password') }}">Change Password</a>
+								</li>
+								<li role="presentation">
+									<a  class="dropdown-item" tabindex="-1" href="{{ url_for('auth.change_email_request') }}">Change Email</a>
+								</li>
+								<li role="presentation" class="dropdown-divider"></li>
+								<li role="presentation">
+									<a class="dropdown-item" tabindex="-1" href="{{ url_for('auth.logout') }}">Log Out</a>
+								</li>
+							</ul>
+						</li>
+						{% else %}
+						<li><a class="nav-item nav-link" href="{{ url_for('auth.login') }}">Log In</a></li>
+						{% endif %}
+					</ul>
+				</div>
+
+			</nav>
+	</header>
+
+	<main role="main" class="container">
+		<div class="row">
+			<div class="col-md-8">
+				{% with messages = get_flashed_messages(with_categories=true) %}
+					{% if messages %}
+						{% for category, message in messages %}
+							<div class="alert alert-{{ category }}">
+								<button type="button" class="close" data-dismiss="alert">&times;</button>
+								{{ message }}
+							</div>
+						{% endfor %}
+					{% endif %}
+				{% endwith %}
+				{% block page_content %}{% endblock %}
+			</div>
+			{% block main_right_bar %}{% endblock %}
+		</div>
+	</main>
+	{% block scripts%}
+	{{ moment.include_moment() }}
+    <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
+	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+	{% endblock scripts %}
+
+</body>
+ </html>

@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% import "bootstrap/wtf.html" as wtf %}
+{% import "_macros.html" as macros %}
+
+{% block title%}<title>Flasky - Home</title>{% endblock %}
+
+{% block page_content %}
+
+	{% include '_posts.html' %}
+
+{% if pagination %}
+<div class="pagination">
+	{{ macros.pagination_widget(pagination, '.index') }}
+</div>
+{% endif %}
+
+{% endblock %}
+
+{% block main_right_bar %}
+<div class="col-md-4">
+          <div class="content-section">
+            <h3>Options</h3>
+            <p class='text-muted'>
+            	{% if current_user.is_authenticated %}
+            		Hello, {{ current_user.username }}! How is it going?
+            	{% else %}
+            		What's on your mind? Login NOW!
+            	{% endif %}
+              <ul class="list-group">
+              		{% if not show_followed %}
+                		<li  class="active list-group-item list-group-item-light" >All</li>
+                	{% else %}
+						<a class="list-group-item list-group-item-light" href="{{ url_for('.show_all') }}">All</a>
+                	{% endif %} 
+
+				{% if current_user.is_authenticated %}
+
+				    {% if show_followed %}
+                		<li  class="active list-group-item list-group-item-light" >Followed</li>
+                	{% else %}
+						<a class="list-group-item list-group-item-light" href="{{ url_for('.show_followed') }}">Followed</a>
+                	{% endif %} 
+
+                	<li class="list-group-item list-group-item-light">Liked</li>
+                	<a class="list-group-item list-group-item-light" href="{{ url_for('.new_post') }}">Write A New Post</a>
+                {% endif %}
+              </ul>
+            </p>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+{{ pagedown.include_pagedown() }}
+{% endblock %}
