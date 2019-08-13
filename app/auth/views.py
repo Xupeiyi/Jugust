@@ -102,7 +102,7 @@ def change_password():
 			flash('Your password has been updated.', 'success')
 			return redirect(url_for('main.index'))
 		else:
-			flash('Invalid password.')
+			flash('Invalid password.', 'danger')
 	return render_template("auth/change_password.html", form=form)
 
 

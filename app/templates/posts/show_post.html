@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+{% import "bootstrap/wtf.html" as wtf %}
+{% import "_macros.html" as macros %}
+
+{% block title %}<title>Flasky - Post</title>{% endblock %}
+
+{% block page_content %}
+
+<article class="media content-section">
+	<img class="rounded-circle article-img" src="{{ post.author.gravatar(size=40) }}">
+	<div class="media-body">
+		<div class="article-metadata">
+			<a class="mr-2" href="{{ url_for('main.user', username=post.author.username) }}">{{ post.author.username }}</a>
+			<small class="text-muted">{{ post.timestamp.strftime('%Y-%m-%d') }}</small>
+			<small class="text-muted post-date">{{ moment(post.timestamp).fromNow() }}</small>
+		
+			{% if current_user == post.author %}
+				<div >
+					<a class="btn btn-primary btn-sm mt-1 mb-1" href="{{ url_for('posts.edit_post', id=post.id) }}">Edit</a>
+					<button type="button" class="btn btn-danger btn-sm m-1" data-toggle="modal" data-target="#deleteModal">Delete</button>
+				</div>
+			{% elif current_user.is_administrator() %}
+				<div >
+					<a class="btn btn-primary btn-sm mt-1 mb-1" href="{{ url_for('posts.edit_post', id=post.id) }}">Edit [Admin]</a>
+					<button type="button" class="btn btn-danger btn-sm m-1" data-toggle="modal" data-target="#deleteModal">Delete [Admin]</button>
+				</div>
+			{% elif current_user.can(Permission.FOLLOW) and user != current_user %}
+				<div>
+					{% if not current_user.is_following(post.author) %}
+						<a class="btn btn-success btn-sm mt-1 mb-1" href="{{ url_for('posts.quick_follow', id=post.id, username=post.author.username) }}">Follow</a>
+					{% else %}
+						<a class="btn btn-secondary btn-sm mt-1 mb-1" href="{{ url_for('posts.quick_unfollow', id=post.id, username=post.author.username) }}">Unfollow</a>
+					{% endif%}
+				</div>
+			{% endif %}
+		</div>
+		<h2 class="article-title">{{ post.title }}</h2>
+		<div class="article-content">
+			{% if post.body_html %}
+				{{ post.body_html | safe }}
+			{% else %}
+				{{ post.body }}
+			{% endif %}
+		</div>
+	</div>
+</article>
+
+<!-- Modla -->
+  <div class="modal fade" id="deleteModal" tabindex="-1" role="dialog" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="deleteModalLabel">Delete Post?</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+          <form action="{{ url_for('posts.delete_post', id=post.id) }}" method="POST">
+            <input class="btn btn-danger" type="submit" value="Delete">
+          </form>
+        </div>
+      </div>
+    </div>
+</div>
+
+<!--collect -->
+{% if current_user.is_authenticated %}
+    {% if current_user.is_collecting(post) %}  <!-- 显示取消收藏表单 -->
+        <form class="inline" method="post"
+              action="{{ url_for('posts.uncollect', id=post.id) }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit" class="btn btn-outline-secondary btn-sm">
+            	<span class="oi oi-star"></span> 
+                <span class="badge">{{ post.collectors|length}}</span>Uncollect
+            </button>
+        </form>
+    {% else %}  <!-- 显示收藏表单 -->
+        <form class="inline" method="post"
+              action="{{ url_for('posts.collect', id=post.id) }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit" class="btn btn-outline-primary btn-sm">
+            	<span class="oi oi-star"></span> 
+                <span class="badge">{{ post.collectors|length}}</span> Collects
+            </button>
+        </form>
+    {% endif %}
+{% endif %}
+
+
+<div  class="comment-form">
+<h4 id="comments">Comments</h4>
+
+
+{% if current_user.can(Permission.COMMENT) %}
+
+	{{ wtf.quick_form(form) }}
+</div>
+
+{% include '/posts/_comments.html' %}
+{% if pagination %}
+<div class="pagination">
+	{{ macros.pagination_widget(pagination, 'posts.show_post', fragment='#comments', id=post.id) }}
+</div>
+
+{% endif %}
+{% endif %}
+
+{% endblock page_content %}
+
+{% block scripts %}
+{{ super() }}
+{{ pagedown.include_pagedown() }}
+{% endblock %}

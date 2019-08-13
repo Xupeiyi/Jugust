@@ -1,0 +1,41 @@
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+	 <link rel="stylesheet" href="http://beta.panda.qq.com/static/onhold/bootstrap/css/bootstrap.min.css">
+	<script src="https://code.jquery.com/jquery-3.2.1.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
+    <script src="http://beta.panda.qq.com/static/onhold/bootstrap/js/bootstrap.min.js"></script>
+
+
+<script>
+$(document).ready(function() {
+    if(location.hash) {
+        $('a[href=' + location.hash + ']').tab('show');
+    }
+    $(document.body).on("click", "a[data-toggle]", function(event) {
+        location.hash = this.getAttribute("href");
+    });
+});
+$(window).on('popstate', function() {
+    var anchor = location.hash || $("a[data-toggle=tab]").first().attr("href");
+    $('a[href=' + anchor + ']').tab('show');
+});
+</script>
+</head>
+<body>
+<div>
+<ul class="nav nav-tabs">
+    <li class="active"><a data-toggle="tab" href="#home">Home</a></li>
+    <li><a data-toggle="tab" href="#profile">Profile</a></li>
+    <li><a data-toggle="tab" href="#messages">Messages</a></li>
+    <li><a data-toggle="tab" href="#settings">Settings</a></li>
+</ul>
+
+<div class="tab-content">
+    <div class="tab-pane active" id="home">home</div>
+    <div class="tab-pane" id="profile">profile</div>
+    <div class="tab-pane" id="messages">messages</div>
+    <div class="tab-pane" id="settings">settings</div>
+</div>
+</div>
+</body>
+</html>

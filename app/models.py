@@ -105,6 +105,7 @@ class User(UserMixin, db.Model):
 									  lazy='dynamic',
 									  cascade='all, delete-orphan')
 	comments = db.relationship('Comment', backref='author', lazy='dynamic')
+	collections = db.relationship('Collect', back_populates='collector', cascade='all')
 
 	@staticmethod
 	def add_self_follows():
@@ -238,6 +239,28 @@ class User(UserMixin, db.Model):
 	def followed_posts(self):
 		return Post.query.join(Follow, Follow.followed_id == Post.author_id)\
 			 .filter(Follow.follower_id == self.id)
+
+	@property
+	def collected_posts(self):
+		return Post.query.join(Collect, Collect.collected_id == Post.id)\
+			.filter(Collect.collector_id == self.id)
+	
+	def is_collecting(self, post):
+		return Collect.query.with_parent(self).filter_by(
+			collected_id=post.id).first() is not None
+
+	def collect(self, post):
+		if not self.is_collecting(post):
+			collect = Collect(collector=self, collected=post)
+			db.session.add(collect)
+			db.session.commit()
+
+	def uncollect(self, post):
+		collect = Collect.query.with_parent(self).\
+									filter_by(collected_id=post.id).first()
+		if collect:
+			db.session.delete(collect)
+			db.session.commit()
 	
 	def __repr__(self):
 		return '<User %r>' %self.username
@@ -261,11 +284,13 @@ def load_user(user_id):
 class Post(db.Model):
 	__tablename__ = 'posts'
 	id = db.Column(db.Integer, primary_key=True)
+	title = db.Column(db.Text)
 	body = db.Column(db.Text)
 	body_html = db.Column(db.Text)
 	timestamp = db.Column(db.DateTime, index=True, default=datetime.utcnow)
 	author_id = db.Column(db.Integer, db.ForeignKey('users.id'))
 	comments = db.relationship('Comment', backref='post', lazy='dynamic')
+	collectors = db.relationship('Collect', back_populates='collected', cascade='all')
 
 	@staticmethod
 	def on_changed_body(target, value, oldvalue, initiator):
@@ -298,6 +323,16 @@ class Comment(db.Model):
 			tags=allowed_tags, strip=True))
 
 db.event.listen(Comment.body, 'set', Comment.on_changed_body)
+
+
+class Collect(db.Model):
+	collector_id = db.Column(db.Integer, db.ForeignKey('users.id'), 
+											primary_key=True)
+	collected_id = db.Column(db.Integer, db.ForeignKey('posts.id'), 
+											primary_key=True)
+	timestamp = db.Column(db.DateTime, index=True, default=datetime.utcnow)
+	collector = db.relationship('User', back_populates='collections', lazy='joined')
+	collected = db.relationship('Post', back_populates='collectors', lazy='joined')
 
 
 
