@@ -1,14 +1,30 @@
 {% extends "base.html" %}
 {% import "bootstrap/wtf.html" as wtf %}
 
-{% block title %}<title>New Post</title>{% endblock %}
+{% block header %}
+{{ super() }}
+<style>
+.flask-pagedown-input {
+
+}
+.flask-pagedown-preview {
+
+}
+</style>
+{% endblock %}
+{% block title %}<title>Jugust - 写文章</title>{% endblock %}
 
 {% block page_content %}
-<div class="content-section">
-	<h3>New Post</h3>
-	{{ wtf.quick_form(form) }}
+	<div class="content-section">
+
+				<h3>写文章</h3>
+				{{ wtf.quick_form(form) }}
+				</div>
+	</div>
+</div>
 </div>
 {% endblock page_content %}
+
 
 {% block scripts %}
 {{ pagedown.include_pagedown() }}

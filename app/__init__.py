@@ -6,6 +6,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
 from flask_pagedown import PageDown
 from flask_wtf import CSRFProtect
+from flask_whooshee import Whooshee
 from config import config
 
 bootstrap = Bootstrap()
@@ -14,6 +15,7 @@ moment = Moment()
 db = SQLAlchemy()
 pagedown = PageDown()
 csrf = CSRFProtect()
+whooshee = Whooshee()
 
 login_manager = LoginManager()
 login_manager.login_view = 'auth.login'
@@ -31,6 +33,7 @@ def create_app(config_name):
 	login_manager.init_app(app)
 	pagedown.init_app(app)
 	csrf.init_app(app)
+	whooshee.init_app(app)
 	
 	from .main import main as main_blueprint
 	app.register_blueprint(main_blueprint)
@@ -40,5 +43,9 @@ def create_app(config_name):
 
 	from .posts import posts as posts_blueprint
 	app.register_blueprint(posts_blueprint, url_prefix='/posts')
-	
+
+	from .users import users as users_blueprint
+	app.register_blueprint(users_blueprint, url_prefix='/users')
+
+
 	return app

@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% import "_macros.html" as macros %}
+
+{% block title %}<title>Jugust - {{ user.username }}</title>{% endblock %}
+
+{% block page_content %}
+<div class="content-section">
+    <div class="media">
+        <img class="img-rounded profile-thumbnail" src="{{ user.gravatar(size=256) }}">
+        <div class="profile-header">
+            <h2 class="account-heading">{{ user.username }}
+            </h2>
+            {% if user.name %}
+                 <h3 class="text-muted">{{ user.name}}
+                 {% if user.confirmed %}
+                    <small class="text-muted">[已认证]</small>
+                 {% endif %}
+             </h3>
+            {% endif %}
+            <p>
+                {% if user.about_me %} 
+                <span class="oi oi-pencil"></span>
+                <span class="text-muted">{{ user.about_me }}</span><br>{% endif %}
+        
+                {% if user.location %}
+                    <span class="oi oi-map-marker" ></span>
+                    <a href="https://www.amap.com/search?query={{ user.location }}">{{ user.location }}</a><br>
+                {% endif %}
+
+                {% if current_user.is_administrator() %}
+                    <span class="oi oi-envelope-closed"></span>
+                    <a href="mailto:{{ user.email }}">{{ user.email }}</a><br>
+                {% endif %}
+                    <span class="oi oi-calendar"></span>
+                    <span class="text-secondary">加入时间 {{ moment(user.member_since).format('L') }} 
+                上次登录时间 {{ moment(user.last_seen).fromNow() }}.</span><br>
+                    <span class="oi oi-file"></span>
+                    <span class="text-secondary">{{ user.posts.count() }}文章。{{ user.comments.count() }}评论。{{ user.collections|length}}收藏。</span>
+            </p>
+            <p>
+                {% if current_user.can(Permission.FOLLOW) and user != current_user %}
+                    {% if not current_user.is_following(user) %}
+                        <a href="{{ url_for('users.follow', username=user.username) }}" class="btn btn-success">关注</a>
+                    {% else %}
+                         <a href="{{ url_for('users.unfollow', username=user.username) }}" class="btn btn-secondary">取消关注</a>
+                    {% endif %}
+                {% endif %}
+       
+                <a class="badge badge-pill badge-info" href="{{ url_for('users.followers', username=user.username) }}">粉丝 <span class="badge">{{ user.followers.count() - 1 }}</span></a>
+                <a class="badge badge-pill badge-info" href="{{ url_for('users.followed_by', username=user.username) }}">关注 <span class="badge">{{ user.followed.count() - 1 }}</span></a>
+
+
+                {% if current_user.is_authenticated and user != current_user and user.is_following(current_user) %}
+                 <span class="label label-default">关注了你</span>
+                {% endif %}
+            </p>
+            <p>
+                {% if user == current_user %}
+                <a class="btn btn-primary" href="{{ url_for('users.edit_profile') }}">修改档案</a>
+                {% endif %}
+                {% if current_user.is_administrator() %}
+                <a class="btn btn-danger" href="{{ url_for('users.edit_profile_admin', id=user.id) }}">修改档案[管理员]</a>
+                {% endif %}
+            </p>
+        </div>
+    </div>
+</div>
+<h3 id="posts_written">{{ user.username }}的文章</h3>
+{% include 'posts/_posts.html' %}
+{% if pagination %}
+<div class="pagination">
+    {{ macros.pagination_widget(pagination, '.user',fragment='#posts_written', username=user.username) }}
+</div>
+{% endif %}
+{% endblock %}

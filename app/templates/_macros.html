@@ -8,10 +8,11 @@
 	{% for p in pagination.iter_pages() %}
 		{% if p %}
 			{% if p == pagination.page %}
-				<a class="btn btn-info mb-4" href="{{ url_for(endpoint, page = p, **kwargs) }}">{{ p }}</a>
+		 	<li>
+				<a class="btn btn-info mb-4" href="{{ url_for(endpoint, page = p, **kwargs) }}{{ fragment }}">{{ p }}</a>
 			</li>
 			{% else %}
-				<a class="btn btn-outline-info mb-4" href="{{ url_for(endpoint, page = p, **kwargs) }}">{{ p }}</a>
+				<a class="btn btn-outline-info mb-4" href="{{ url_for(endpoint, page = p, **kwargs) }}{{ fragment }}">{{ p }}</a>
 			{% endif %}
 		{% else %}
 		<li class="disabled"><a class="disabled" href="#">&hellip;</a></li>

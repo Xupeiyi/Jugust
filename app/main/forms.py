@@ -40,7 +40,7 @@ class EditProfileAdminForm(FlaskForm):
 	submit = SubmitField('Submit')
 
 	def __init__(self, user, *args, **kwargs):
-		super(EditProfileAdminForm, self).__int__(*args, **kwargs)
+		super(EditProfileAdminForm, self).__init__(*args, **kwargs)
 		self.role.choices = [(role.id, role.name)
 								 for role in Role.query.order_by(Role.name).all()]
 		self.user = user

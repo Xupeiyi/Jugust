@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% import "bootstrap/wtf.html" as wtf %}
+
+{% block title %}<title>Jugust - 编辑档案</title>{% endblock %}
+
+{% block page_content %}
+<div class="content-section">
+	<h1>编辑档案</h1>
+
+	{{ wtf.quick_form(form) }}
+
+</div>
+{% endblock %}

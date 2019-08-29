@@ -1,11 +1,11 @@
 	{% for post in posts %}
 	<article class="media content-section">
-		<a href="{{ url_for('main.user', username=post.author.username) }}">
+		<a href="{{ url_for('users.user', username=post.author.username) }}">
 				<img class="rounded-circle article-img" src="{{ post.author.gravatar(size=40) }}">
 		</a>
 		<div class="media-body">
 			<div class="article-metadata">
-				<a class="mr-2"  href="{{ url_for('main.user', username=post.author.username) }}">{{post.author.username }}</a>
+				<a class="mr-2"  href="{{ url_for('users.user', username=post.author.username) }}">{{post.author.username }}</a>
 				<small class="text-muted">{{ post.timestamp.strftime('%Y-%m-%d') }}</small>
 				<small class="text-muted post-date">{{ moment(post.timestamp).fromNow() }}</small>
 				

@@ -2,11 +2,10 @@ from flask import render_template, redirect, url_for, abort,flash, request,\
 	current_app, make_response
 from flask_login import login_required, current_user
 from . import main
-from .forms import EditProfileForm, EditProfileAdminForm
 from .. import db
-from ..models import Permission, Role, User, Post, Comment
-from ..decorators import admin_required, permission_required
-
+from ..models import Permission, Role, User, Post, Comment, Notification
+from ..utils import admin_required, permission_required, redirect_back
+from ..notifications import push_follow_notification
 
 @main.route('/', methods=['GET', 'POST'])
 def index():
@@ -21,137 +20,11 @@ def index():
 	else:
 		query = Post.query
 	pagination = query.order_by(Post.timestamp.desc()).paginate(
-		page, per_page=current_app.config['FLASKY_POSTS_PER_PAGE'],
+		page, per_page=current_app.config['JUGUST_POSTS_PER_PAGE'],
 		error_out=False)
 	posts = pagination.items
 	return render_template('index.html',  posts=posts,
 								 show_what=show_what, pagination=pagination)
-
-
-@main.route('/user/<username>')
-def user(username):
-    user = User.query.filter_by(username=username).first_or_404()
-    page = request.args.get('page', 1, type=int)
-    pagination = user.posts.order_by(Post.timestamp.desc()).paginate(
-        page, per_page=current_app.config['FLASKY_POSTS_PER_PAGE'],
-        error_out=False)
-    posts = pagination.items
-    return render_template('user.html', user=user, posts=posts,
-						pagination=pagination)
-
-@main.route('/edit-profile', methods=['GET', 'POST'])
-@login_required
-def edit_profile():
-	form = EditProfileForm()
-	if form.validate_on_submit():
-		current_user.name = form.name.data
-		current_user.location = form.location.data
-		current_user.about_me = form.about_me.data
-		db.session.add(current_user._get_current_object())
-		db.session.commit()
-		flash('Your profile has been updated.', 'success')
-		return redirect(url_for('.user', username=current_user.username))
-	form.name.data = current_user.name
-	form.location.data = current_user.location
-	form.about_me.data = current_user.about_me
-	return render_template('edit_profile.html', form=form)
-
-
-@main.route('/edit-profile/<int:id>', methods=['GET', 'POST'])
-@login_required
-@admin_required
-def edit_profile_admin(id):
-	user = User.query.get_or_404(id)
-	form = EditProfileAdminForm(user=user)
-	if form.validate_on_submit():
-		user.email = form.email.data
-		user.username = form.username.data
-		user.confirmed = form.confirmed.data
-		user.role = Role.query.get(form.role.data)
-		user.name = form.name.data
-		user.location = form.location.data
-		user.about_me = form.about_me.data
-		db.session.add(user)
-		db.session.commit()
-		flash('The profile has been updated!', 'success')
-		return redirect(url_for('.user', username=user.username))
-	form.email.data = user.email
-	form.username.data = user.username
-	form.confirmed,data = user.confirmed
-	form.role.data = user,role_id
-	form.name,data = user.name
-	form.loaction.data = user.location
-	form.about_me.data = user.about_me
-	return render_template('edit_profile.html', form=form, user=user)
-
-
-
-@main.route('/follow/<username>')
-@login_required
-@permission_required(Permission.FOLLOW)
-def follow(username):
-	user = User.query.filter_by(username=username).first()
-	if user is None:
-		flash('Invalid user.', 'danger')
-		return redirect(url_for('.index'))
-	if current_user.is_following(user):
-		flash('You are already following this user.', 'info')
-		return redirect(url_for('.user', username=username))
-	current_user.follow(user)
-	db.session.commit()
-	flash('You are now following %s.' %username, 'success')
-	return redirect(url_for('.user', username=username))
-
-
-@main.route('/unfollow/<username>')
-@login_required
-@permission_required(Permission.FOLLOW)
-def unfollow(username):
-	user = User.query.filter_by(username=username).first()
-	if user is None:
-		flash('Invalid user.', 'danger')
-		return redirect(url_for('.index'))
-	if not current_user.is_following(user):
-		flash('You are not following this user.', 'info')
-		return redirect(url_for('.user', username=username))
-	current_user.unfollow(user)
-	db.session.commit()
-	flash('You are not following %s anymore.' % username, 'success')
-	return redirect(url_for('.user', username=username))
-
-
-@main.route('/followers/<username>')
-def followers(username):
-	user = User.query.filter_by(username=username).first()
-	if user is None:
-		flash('Invalid user.', 'danger')
-		return redirect(url_for('.index'))
-	page = request.args.get('page', 1, type=int)
-	pagination = user.followers.paginate(
-		page, per_page=current_app.config['FLASKY_FOLLOWERS_PER_PAGE'],
-		error_out=False)
-	follows = [{'user': item.follower, 'timestamp': item.timestamp} 
-				 for item in pagination.items]
-	return render_template('followers.html', user=user, title="Followers of",
-								 endpoint='.followers', pagination=pagination,
-								 follows=follows)
-
-
-@main.route('/followed_by/<username>')
-def followed_by(username):
-	user = User.query.filter_by(username=username).first()
-	if user is None:
-		flash('Invalid user.', 'dnager')
-		return redirect(url_for('.index'))
-	page = request.args.get('page', 1, type=int)
-	pagination = user.followed.paginate(
-		page, per_page=current_app.config['FLASKY_FOLLOWERS_PER_PAGE'],
-		error_out=False)
-	follows = [{'user': item.followed, 'timestamp': item.timestamp}
-				 for item in pagination.items]
-	return render_template('followers.html', user=user, title="Followed by",
-								 endpoint='.followed_by', pagination=pagination,
-								 follows=follows)
 
 
 @main.route('/all')
@@ -169,6 +42,7 @@ def show_followed():
 	resp.set_cookie('show_what', 'show_followed', max_age=30*24*60*60)
 	return resp
 
+
 @main.route('/collected')
 @login_required
 def show_collected():
@@ -184,7 +58,7 @@ def show_collected():
 def moderate():
 	page = request.args.get('page', 1, type=int)
 	pagination = Comment.query.order_by(Comment.timestamp.desc()).paginate(
-		page, per_page=current_app.config['FLASKY_COMMENTS_PER_PAGE'],
+		page, per_page=current_app.config['JUGUST_COMMENTS_PER_PAGE'],
 		error_out=False)
 	comments = pagination.items
 	return render_template('moderate.html', comments=comments,
@@ -213,5 +87,66 @@ def moderate_disable(id):
 	db.session.commit()
 	return redirect(url_for('.moderate', 
 								 page=request.args.get('page', 1, type=int)))
+
+
+@main.route('/notifications')
+@login_required
+def show_notifications():
+	page = request.args.get('page', 1, type=int)
+	per_page = current_app.config['JUGUST_NOTIFICATION_PER_PAGE']
+	notifications = Notification.query.with_parent(current_user)
+	filter_rule = request.args.get('filter')
+	if filter_rule == 'unread':
+		notifications = notifications.filter_by(is_read=False)
+
+	pagination = notifications.order_by(Notification.timestamp.desc())\
+								.paginate(page, per_page)
+	notifications = pagination.items
+	return render_template('notifications.html', pagination=pagination, 
+																						notifications=notifications)
+
+@main.route('/notification/read/<int:notification_id>', methods=['POST'])
+@login_required
+def read_notification(notification_id):
+	notification = Notification.query.get_or_404(notification_id)
+	if current_user != notification.receiver:
+		abort(403)
+
+	notification.is_read = True
+	db.session.commit()
+	flash('消息已归档。', 'success')
+	return redirect_back()
+
+
+@main.route('/notifications/read/all', methods=['POST'])
+@login_required
+def read_all_notifications():
+	for notification in current_user.notifications:
+		notification.is_read = True
+	db.session.commit()
+	flash('所有消息已归档。', 'success')
+	return redirect_back()
+
+
+@main.route('/search')
+def search():
+	q  = request.args.get('q', '').strip()
+	if q == '':
+		flash('输入标题，内容或用户的关键字。', 'warning')
+		return redirect(url_for('.index'))
+
+	category = request.args.get('category', 'post')
+	page = request.args.get('page', 1, type=int)
+	if category == 'user':
+		pagination = User.query.whooshee_search(q).paginate(page, 
+										current_app.config['JUGUST_FOLLOWERS_PER_PAGE'])
+	else:
+		pagination = Post.query.whooshee_search(q).paginate(page, 
+												current_app.config['JUGUST_POSTS_PER_PAGE'])
+	results = pagination.items
+	return render_template('search.html', q=q, results=results, 
+	pagination = pagination, category=category)
+
+
 
 

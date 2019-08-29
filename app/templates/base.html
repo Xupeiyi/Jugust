@@ -2,18 +2,20 @@
 <html>
 <head>
     <!-- Required meta tags -->
+    {% block header %}
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 
     <!-- Bootstrap CSS -->
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
-    <link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}" type="image/x-icon">
     <link href="{{ url_for('static',filename='open-iconic/font/css/open-iconic-bootstrap.css') }}" rel="stylesheet">
 	<link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" type="image/x-icon">
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='main.css') }}">
 
     {{ moment.include_jquery() }}
     {{ moment.include_moment() }}
+    {{moment.lang('zh-CN')}}
+    {% endblock %}
 
    {% block title %}{% endblock %}
 </head>
@@ -21,46 +23,73 @@
 <body>
 	<header class="site-header">
 			<nav class="navbar navbar-expand-md navbar-dark bg-steel fixed-top" >
-				<div class="container">
-					<a class="navbar-brand mr-4" href="{{ url_for('main.index') }}">Flasky</a>
+				<div class="container">	
+
+					<a class="navbar-brand mr-4" href="{{ url_for('main.index') }}">Jugust博客</a>
 					<button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarToggle" aria-controls="navbarToggle" aria-expanded="false" aria-label="Toggle navigation">
 						<span class="navbar-toggler-icon"></span>
 					</button>
 
-					<div class="navbar-collapse collapse">
-						<div class="nav navbar-nav mr-auto">
-							<a class="nav-item nav-link" href="{{ url_for('main.index') }}">Home</a>
-							{% if current_user.is_authenticated %}
-							<a class="nav-item nav-link" href="{{ url_for('main.user', username=current_user.username) }}">Profile</a>
-							{% endif %}
-						</div>
-					</div>
+					<div class="navbar-collapse mr-4">
 
+						<div class="nav navbar-nav mr-4">
+							<a class="nav-item nav-link" href="{{ url_for('main.index') }}">
+								<span class="oi oi-home"></span> 主页</a>
+							{% if current_user.is_authenticated %}
+							<a class="nav-item nav-link" href="{{ url_for('users.user', username=current_user.username) }}">
+								<span class="oi oi-person"></span> 档案</a>
+							{% endif %}
+						</div>			
+
+						<div class="nav navbar-nav">
+							<form class="form-inline my-2 my-sm-0" action="{{ url_for('main.search') }}">
+							    <input type="text" name="q" class="form-control my-2 my-sm-0 nav-item nav-link"  style="width:390px;color:black" placeholder="搜索标题，内容或用户" required>
+							    <button class="btn bg-steel my-2 my-sm-0 nav-item nav-link" type="submit">
+							        <span class="oi oi-magnifying-glass"></span>
+							    </button>
+							</form>
+						</div>
+
+
+
+					</div>
+<!--
+
+-->
 					<ul class="nav navbar-nav">	
 					{% if current_user.can(Permission.MODERATE) %}
-						<li><a href="{{ url_for('main.moderate') }}">Moderate Comments</a></li>
+						<li>
+							<a class="nav-item nav-link" href="{{ url_for('main.moderate') }}">管理评论</a></li>
 						{% endif %}
 						{% if current_user.is_authenticated %}
+						<li>
+							<a class="nav-item nav-link" href="{{ url_for('main.show_notifications', filter='unread') }}">
+								<span class="oi oi-bell"></span>&nbsp;消息
+								{% if notification_count !=0 %}
+									<span class="badge badge-danger badge-notification">{{ notification_count }}</span>
+								{% endif %}
+							</a>
+						</li>
 						<li class="dropdown">
 							<a href="#" class="dropdown-toggle nav-item nav-link" data-toggle="dropdown">
 								<img src="{{ current_user.gravatar(size=18) }}">
-								Account <b class="caret"></b>
+									 <b class="caret"></b>
 							</a>
 							<ul class="dropdown-menu" role="menu" aria-labelledby="dropdownMenu1">
 								<li role="presentation">
-									<a class="dropdown-item" href="{{ url_for('auth.change_password') }}">Change Password</a>
+									<a class="dropdown-item" href="{{ url_for('auth.change_password') }}">更改密码</a>
 								</li>
 								<li role="presentation">
-									<a  class="dropdown-item" tabindex="-1" href="{{ url_for('auth.change_email_request') }}">Change Email</a>
+									<a  class="dropdown-item" tabindex="-1" href="{{ url_for('auth.change_email_request') }}">更改邮箱</a>
 								</li>
 								<li role="presentation" class="dropdown-divider"></li>
 								<li role="presentation">
-									<a class="dropdown-item" tabindex="-1" href="{{ url_for('auth.logout') }}">Log Out</a>
+									<a class="dropdown-item" tabindex="-1" href="{{ url_for('auth.logout') }}">退出</a>
 								</li>
 							</ul>
 						</li>
 						{% else %}
-						<li><a class="nav-item nav-link" href="{{ url_for('auth.login') }}">Log In</a></li>
+						<li><a class="nav-item nav-link" href="{{ url_for('auth.login') }}">登录</a></li>
 						{% endif %}
 					</ul>
 				</div>
@@ -68,8 +97,10 @@
 			</nav>
 	</header>
 
+
 	<main role="main" class="container">
 		<div class="row">
+
 			<div class="col-md-8">
 				{% with messages = get_flashed_messages(with_categories=true) %}
 					{% if messages %}

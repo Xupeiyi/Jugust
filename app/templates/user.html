@@ -8,11 +8,11 @@
     <div class="media">
         <img class="img-rounded profile-thumbnail" src="{{ user.gravatar(size=256) }}">
         <div class="profile-header">
-            <h1 class="account-heading">{{ user.username }}
-                {% if user.name %}
-                <small class="text-muted">{{ user.name}}</small>
-                {% endif %}
-            </h1>
+            <h2 class="account-heading">{{ user.username }}
+            </h2>
+            {% if user.name %}
+                 <h3 class="text-muted">{{ user.name}}</h3>
+            {% endif %}
             <p>
                 {% if user.about_me %} 
                 <span class="oi oi-pencil"></span>
@@ -24,6 +24,7 @@
             {% endif %}
 
             {% if current_user.is_administrator() %}
+            <span class="oi oi-envelope-closed"></span>
             <a href="mailto:{{ user.email }}">{{ user.email }}</a><br>
             {% endif %}
             <span class="oi oi-calendar"></span>
@@ -61,11 +62,11 @@
         </div>
     </div>
 </div>
-<h3>Posts by {{ user.username }}</h3>
+<h3 id="posts_written">Posts by {{ user.username }}</h3>
 {% include 'posts/_posts.html' %}
 {% if pagination %}
 <div class="pagination">
-    {{ macros.pagination_widget(pagination, '.user', username=user.username) }}
+    {{ macros.pagination_widget(pagination, '.user',fragment='#posts_written', username=user.username) }}
 </div>
 {% endif %}
 {% endblock %}

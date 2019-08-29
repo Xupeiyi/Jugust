@@ -1,0 +1,76 @@
+{% extends 'base.html' %}
+{% import "bootstrap/wtf.html" as wtf %}
+{% import "_macros.html" as macros %}
+
+
+{% block title %}<title>搜索: {{ q }}</title>{% endblock %}
+
+{% block page_content %}
+    {% if results %}
+            {% if category == 'post' %}
+                    {% for post in results %}
+                    <article class="media content-section">
+                        <a href="{{ url_for('users.user', username=post.author.username) }}">
+                                <img class="rounded-circle article-img" src="{{ post.author.gravatar(size=40) }}">
+                        </a>
+                        <div class="media-body">
+                            <div class="article-metadata">
+                                <a class="mr-2"  href="{{ url_for('users.user', username=post.author.username) }}">{{ post.author.username }}</a>
+                                <small class="text-muted">{{ post.timestamp.strftime('%Y-%m-%d') }}</small>
+                                <small class="text-muted post-date">{{ moment(post.timestamp).fromNow() }}</small>
+                                
+                            </div>
+                            <h2><a class="article-title" href="{{url_for('posts.show_post', id=post.id) }}">{{ post.title }}</a></h2>
+                            <p class="article-content">{{ post.body | striptags | truncate }}</p>
+                        </div>
+                    </article>
+                    {% endfor %}
+ 
+            {% elif category == 'user' %}
+                <table class="table table-hover followers">
+                    <thead><tr><th>用户</th><th>加入时间</th></tr></thead>
+                    {% for user in results %}
+                        <tr>
+                            <td>
+                                <a href="{{ url_for('users.user', username = user.username) }}">
+                                    <img class="img-rounded" src="{{ user.gravatar(size=32) }}">
+                                    {{ user.username }}
+                                </a>
+                                {% if user.name %}
+                                    <small class="text-muted">{{ user.name }}</small>
+                                {% endif %}
+                            </td>
+                            <td>{{ moment(user.member_since).format('L') }}</td>
+                        </tr>
+                    {% endfor %}
+                </table>
+            {% endif %}
+            {% if pagination %}
+                <div class="col-md-9">
+                    {{ macros.pagination_widget(pagination, '.search', q=q, category=category) }}
+                </div>
+            {% endif %}         
+    {% else %}
+        <h5 class="tip">没有结果</h5>
+    {% endif %}
+
+
+
+{% endblock %}
+
+{% block main_right_bar %}
+<div class="col-md-4">
+    <div class="rightbar_fixed">
+         <h3>搜索: {{ q }}</h3>
+                <p class='text-muted'>{{ results|length }} 个结果</p>
+              <ul class="list-group" id="right-navbar">
+                <a class="list-group-item list-group-item-light {% if category == 'post' %}active{% endif %}"
+                   href="{{ url_for('.search', q=q, category='post') }}">文章</a>
+                <a class="list-group-item list-group-item-light nav-item nav-link {% if category == 'user' %}active{% endif %}"
+                   href="{{ url_for('.search', q=q, category='user') }}">用户</a>
+              </ul>
+            </p>
+    </div>
+</div>
+
+{% endblock main_right_bar %}

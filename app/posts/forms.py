@@ -13,12 +13,12 @@ from ..models import Role, User
 
 
 class PostForm(FlaskForm):
-	title = StringField('Title', validators=[DataRequired()])
-	body = PageDownField("Content", validators=[DataRequired()])
-	submit = SubmitField('Submit')
+	title = StringField('标题', validators=[DataRequired()])
+	body = PageDownField("内容", validators=[DataRequired()])
+	submit = SubmitField('提交')
 
 
 class CommentForm(FlaskForm):
 	body = PageDownField('', validators=[DataRequired()])
-	submit = SubmitField('Submit')
+	submit = SubmitField('提交')
 			

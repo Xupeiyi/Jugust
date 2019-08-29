@@ -5,8 +5,9 @@ from . import posts
 from .. import db
 from ..models import Permission, User, Post, Comment
 from .forms import PostForm, CommentForm
-from ..decorators import admin_required, permission_required
-
+from ..utils import admin_required, permission_required, redirect_back
+from ..notifications import push_collect_notification, push_follow_notification,\
+													push_comment_notification
 	
 @posts.route('/new', methods=['GET', 'POST'])
 @login_required
@@ -18,8 +19,8 @@ def new_post():
 							 author=current_user._get_current_object() )
 		db.session.add(post)
 		db.session.commit()
-		flash('Your post has been created!', 'success')
-		return redirect(url_for('main.index')) 
+		flash('文章已创建！', 'success')
+		return redirect(url_for('posts.show_post', id=post.id)) 
 	return render_template('/posts/create_post.html', form=form)
 
 
@@ -33,14 +34,17 @@ def show_post(id):
 						   				author=current_user._get_current_object())
 		db.session.add(comment)
 		db.session.commit()
-		flash('Your comment has been published.', 'success')
-		return redirect(url_for('posts.show_post', id=post.id, page=-1))
+		flash('评论已发布！', 'success')
+		if current_user != post.author:
+			push_comment_notification(id=post.id, receiver=post.author)
+		return redirect_back()
+
 	page = request.args.get('page', 1, type=int)
 	if page == -1:
 		page = (post.comments.count() - 1) // \
-				 current_app.config['FLASKY_COMMENTS_PER_PAGE'] + 1
+				 current_app.config['JUGUST_COMMENTS_PER_PAGE'] + 1
 	pagination = post.comments.order_by(Comment.timestamp.asc()).paginate(
-		page, per_page=current_app.config['FLASKY_COMMENTS_PER_PAGE'],
+		page, per_page=current_app.config['JUGUST_COMMENTS_PER_PAGE'],
 		error_out=False)
 	comments = pagination.items
 	return render_template('/posts/show_post.html', post=post, form=form,
@@ -60,7 +64,7 @@ def edit_post(id):
 		post.body = form.body.data
 		db.session.add(post)
 		db.session.commit()
-		flash('The post has been updated!', 'success')
+		flash('文章已更新！', 'success')
 		return redirect(url_for('posts.show_post', id=post.id))
 	form.title.data = post.title
 	form.body.data = post.body
@@ -75,42 +79,9 @@ def delete_post(id):
         abort(403)
     db.session.delete(post)
     db.session.commit()
-    flash('Your post has been deleted!', 'success')
+    flash('文章已删除！', 'success')
     return redirect(url_for('main.index'))
 
-
-@posts.route('/quick_follow/<int:id>/<username>')
-@login_required
-@permission_required(Permission.FOLLOW)
-def quick_follow(id, username):
-	user = User.query.filter_by(username=username).first()
-	if user is None:
-		flash('Invalid user.', 'danger')
-		return redirect(url_for('posts.show_post', id=id))
-	if current_user.is_following(user):
-		flash('You are already following this user.', 'info')
-		return redirect(url_for('posts.show_post', id=id))
-	current_user.follow(user)
-	db.session.commit()
-	flash('You are now following %s.' %username, 'success')
-	return redirect(url_for('posts.show_post', id=id))
-
-
-@posts.route('/quick_unfollow/<int:id>/<username>')
-@login_required
-@permission_required(Permission.FOLLOW)
-def quick_unfollow(id, username):
-	user = User.query.filter_by(username=username).first()
-	if user is None:
-		flash('Invalid user.', 'danger')
-		return redirect(url_for('posts.show_post', id=id))
-	if not current_user.is_following(user):
-		flash('You are not following this user.', 'info')
-		return redirect(url_for('posts.show_post', id=id))
-	current_user.unfollow(user)
-	db.session.commit()
-	flash('You are not following %s anymore.' % username, 'success')
-	return redirect(url_for('posts.show_post', id=id))
 
 
 @posts.route('/collect/<int:id>', methods=['POST'])
@@ -118,11 +89,15 @@ def quick_unfollow(id, username):
 def collect(id):
 	post = Post.query.get_or_404(id)
 	if current_user.is_collecting(post):
-		flash('You have already collected that post!', 'info')
-		return redirect(url_for('posts.show_post', id=id))
+		flash('你已经收藏了此文章。', 'info')
+		return redirect_back()
 	current_user.collect(post)
-	flash('Post collected!', 'success')
-	return redirect(url_for('posts.show_post', id=id))
+	flash('文章已收藏！', 'success')
+
+	if current_user !=post.author:
+		push_collect_notification(collector=current_user, id=id, receiver=post.author)
+
+	return redirect_back()
 
 
 @posts.route('/uncollect/<int:id>', methods=['POST'])
@@ -130,9 +105,9 @@ def collect(id):
 def uncollect(id):
 	post = Post.query.get_or_404(id)
 	if not current_user.is_collecting(post):
-		flash('You have not collected that post yet!', 'info')
+		flash('你还没有收藏此文章！', 'info')
 		return redirect(url_for('posts.show_post', id=id))
 	current_user.uncollect(post)
-	flash('Post uncollected!', 'info')
-	return redirect(url_for('posts.show_post', id=id))
+	flash('收藏已取消！', 'info')
+	return redirect_back()
 

@@ -6,7 +6,7 @@ from markdown import markdown
 import bleach
 from flask import current_app, request
 from flask_login import UserMixin, AnonymousUserMixin
-from . import db, login_manager
+from . import db, login_manager, whooshee
 
 
 class Permission:
@@ -79,6 +79,8 @@ class Follow(db.Model):
 	timestamp = db.Column(db.DateTime, default=datetime.utcnow)
 
 
+
+@whooshee.register_model('username', 'name')
 class User(UserMixin, db.Model):
 	__tablename__ = 'users'
 	id = db.Column(db.Integer, primary_key = True)
@@ -94,11 +96,13 @@ class User(UserMixin, db.Model):
 	last_seen = db.Column(db.DateTime(), default=datetime.utcnow)
 	avatar_hash = db.Column(db.String(32))
 	posts = db.relationship('Post', backref='author', lazy='dynamic')
+	#users followed by current user
 	followed = db.relationship('Follow',
 									 foreign_keys=[Follow.follower_id],
 									 backref=db.backref('follower', lazy='joined'),
 									 lazy='dynamic',
 									 cascade='all, delete-orphan')
+	#users following current user
 	followers = db.relationship('Follow',
 									  foreign_keys=[Follow.followed_id],
 									  backref=db.backref('followed', lazy='joined'),
@@ -106,6 +110,7 @@ class User(UserMixin, db.Model):
 									  cascade='all, delete-orphan')
 	comments = db.relationship('Comment', backref='author', lazy='dynamic')
 	collections = db.relationship('Collect', back_populates='collector', cascade='all')
+	notifications = db.relationship('Notification', back_populates='receiver', cascade='all')
 
 	@staticmethod
 	def add_self_follows():
@@ -118,7 +123,7 @@ class User(UserMixin, db.Model):
 	def __init__(self, **kwargs):
 		super(User, self).__init__(**kwargs)
 		if self.role is None:
-			if (self.email == current_app.config['FLASKY_ADMIN']):
+			if (self.email == current_app.config['JUGUST_ADMIN']):
 				self.role = Role.query.filter_by(name='Administrator').first()
 			if (self.role is None):
 				self.role = Role.query.filter_by(default=True).first()
@@ -155,7 +160,7 @@ class User(UserMixin, db.Model):
 
 	def generate_reset_token(self, expiration=3600):
 		s = Serializer(current_app.config['SECRET_KEY'], expiration)
-		return s.dumps({'reset': self.id}.decode('utf-8'))
+		return s.dumps({'reset': self.id}).decode('utf-8')
 
 	@staticmethod
 	def reset_password(token, new_password):
@@ -281,6 +286,7 @@ def load_user(user_id):
 	return User.query.get(int(user_id))
 
 
+@whooshee.register_model('title', 'body')
 class Post(db.Model):
 	__tablename__ = 'posts'
 	id = db.Column(db.Integer, primary_key=True)
@@ -300,6 +306,12 @@ class Post(db.Model):
 		target.body_html = bleach.linkify(bleach.clean(
 			 markdown(value, output_format='html'),
 			 tags=allowed_tags, strip=True))
+
+	def is_collected_by(self, user):
+		if user.id is None:
+			return False
+		return Collect.query.with_parent(self).filter_by(
+			collector_id=user.id).first() is not None
 
 db.event.listen(Post.body, 'set', Post.on_changed_body)
 	
@@ -335,4 +347,10 @@ class Collect(db.Model):
 	collected = db.relationship('Post', back_populates='collectors', lazy='joined')
 
 
-
+class Notification(db.Model):
+	id = db.Column(db.Integer, primary_key=True)
+	message = db.Column(db.Text)
+	is_read = db.Column(db.Boolean, default=False)
+	timestamp = db.Column(db.DateTime, default=datetime.utcnow, index=True)
+	receiver_id = db.Column(db.Integer, db.ForeignKey('users.id'))
+	receiver = db.relationship('User', back_populates='notifications')

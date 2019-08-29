@@ -2,7 +2,7 @@
 {% import "bootstrap/wtf.html" as wtf %}
 {% import "_macros.html" as macros %}
 
-{% block title %}<title>Flasky - Post</title>{% endblock %}
+{% block title %}<title>Jugust - {{ post.title }}</title>{% endblock %}
 
 {% block page_content %}
 
@@ -10,27 +10,30 @@
 	<img class="rounded-circle article-img" src="{{ post.author.gravatar(size=40) }}">
 	<div class="media-body">
 		<div class="article-metadata">
-			<a class="mr-2" href="{{ url_for('main.user', username=post.author.username) }}">{{ post.author.username }}</a>
+			<a class="mr-2" href="{{ url_for('users.user', username=post.author.username) }}">{{ post.author.username }}</a>
 			<small class="text-muted">{{ post.timestamp.strftime('%Y-%m-%d') }}</small>
 			<small class="text-muted post-date">{{ moment(post.timestamp).fromNow() }}</small>
 		
 			{% if current_user == post.author %}
 				<div >
-					<a class="btn btn-primary btn-sm mt-1 mb-1" href="{{ url_for('posts.edit_post', id=post.id) }}">Edit</a>
-					<button type="button" class="btn btn-danger btn-sm m-1" data-toggle="modal" data-target="#deleteModal">Delete</button>
+					<a class="btn btn-primary btn-sm mt-1 mb-1" href="{{ url_for('posts.edit_post', id=post.id) }}">编辑</a>
+					<button type="button" class="btn btn-danger btn-sm m-1" data-toggle="modal" data-target="#deleteModal">删除</button>
 				</div>
-			{% elif current_user.is_administrator() %}
-				<div >
-					<a class="btn btn-primary btn-sm mt-1 mb-1" href="{{ url_for('posts.edit_post', id=post.id) }}">Edit [Admin]</a>
-					<button type="button" class="btn btn-danger btn-sm m-1" data-toggle="modal" data-target="#deleteModal">Delete [Admin]</button>
-				</div>
+
 			{% elif current_user.can(Permission.FOLLOW) and user != current_user %}
 				<div>
 					{% if not current_user.is_following(post.author) %}
-						<a class="btn btn-success btn-sm mt-1 mb-1" href="{{ url_for('posts.quick_follow', id=post.id, username=post.author.username) }}">Follow</a>
+						<a class="btn btn-success btn-sm mt-1 mb-1" href="{{ url_for('users.follow', username=post.author.username) }}">关注</a>
 					{% else %}
-						<a class="btn btn-secondary btn-sm mt-1 mb-1" href="{{ url_for('posts.quick_unfollow', id=post.id, username=post.author.username) }}">Unfollow</a>
+						<a class="btn btn-secondary btn-sm mt-1 mb-1" href="{{ url_for('users.unfollow', username=post.author.username) }}">取消关注</a>
 					{% endif%}
+
+					{% if current_user.is_administrator() %}
+					<div >
+					<a class="btn btn-primary btn-sm mt-1 mb-1" href="{{ url_for('posts.edit_post', id=post.id) }}">编辑 [管理员]</a>
+					<button type="button" class="btn btn-danger btn-sm m-1" data-toggle="modal" data-target="#deleteModal">删除 [管理员]</button>
+				    </div>
+				   {% endif%}
 				</div>
 			{% endif %}
 		</div>
@@ -50,15 +53,16 @@
     <div class="modal-dialog" role="document">
       <div class="modal-content">
         <div class="modal-header">
-          <h5 class="modal-title" id="deleteModalLabel">Delete Post?</h5>
+          <h5 class="modal-title" id="deleteModalLabel">确定要删除文章吗?</h5>
           <button type="button" class="close" data-dismiss="modal" aria-label="Close">
             <span aria-hidden="true">&times;</span>
           </button>
         </div>
         <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">关闭</button>
           <form action="{{ url_for('posts.delete_post', id=post.id) }}" method="POST">
-            <input class="btn btn-danger" type="submit" value="Delete">
+            <input class="btn btn-danger" type="submit" value="删除">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
           </form>
         </div>
       </div>
@@ -73,7 +77,7 @@
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <button type="submit" class="btn btn-outline-secondary btn-sm">
             	<span class="oi oi-star"></span> 
-                <span class="badge">{{ post.collectors|length}}</span>Uncollect
+                <span class="badge">{{ post.collectors|length}}</span>取消收藏
             </button>
         </form>
     {% else %}  <!-- 显示收藏表单 -->
@@ -82,30 +86,28 @@
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <button type="submit" class="btn btn-outline-primary btn-sm">
             	<span class="oi oi-star"></span> 
-                <span class="badge">{{ post.collectors|length}}</span> Collects
+                <span class="badge">{{ post.collectors|length}}</span> 收藏
             </button>
         </form>
     {% endif %}
 {% endif %}
 
+<div class="comment-area" id="comments" style="margin-top: 50px">
+	<h4 >评论({{ post.comments.count() }})</h4>
+	<div  class="comment-form">
+	{% if current_user.can(Permission.COMMENT) %}
+		{{ wtf.quick_form(form) }}
+	{% endif %}
+	</div>
 
-<div  class="comment-form">
-<h4 id="comments">Comments</h4>
+	{% include '/posts/_comments.html' %}
+	{% if pagination %}
+	<div class="pagination">
+		{{ macros.pagination_widget(pagination, 'posts.show_post', fragment='#comments', id=post.id) }}
+	</div>
 
-
-{% if current_user.can(Permission.COMMENT) %}
-
-	{{ wtf.quick_form(form) }}
+	{% endif %}
 </div>
-
-{% include '/posts/_comments.html' %}
-{% if pagination %}
-<div class="pagination">
-	{{ macros.pagination_widget(pagination, 'posts.show_post', fragment='#comments', id=post.id) }}
-</div>
-
-{% endif %}
-{% endif %}
 
 {% endblock page_content %}
 
