@@ -19,7 +19,8 @@ whooshee = Whooshee()
 
 login_manager = LoginManager()
 login_manager.login_view = 'auth.login'
-
+login_manager.login_message = '登录获取更多功能。'
+login_manager.login_message_category = 'info'
 
 def create_app(config_name):
 	app = Flask(__name__)

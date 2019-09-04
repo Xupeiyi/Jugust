@@ -3,7 +3,7 @@ from flask import render_template, redirect, url_for, abort,flash, request,\
 from flask_login import login_required, current_user
 from . import main
 from .. import db
-from ..models import Permission, Role, User, Post, Comment, Notification
+from  ..models import Permission, Role, User, Post, Comment, Notification
 from ..utils import admin_required, permission_required, redirect_back
 from ..notifications import push_follow_notification
 
@@ -147,6 +147,18 @@ def search():
 	return render_template('search.html', q=q, results=results, 
 	pagination = pagination, category=category)
 
+
+
+@main.route('/shutdown')
+def server_shutdown():
+	if not current_app.testing:
+		abort(404)
+	shutdown = request.environ.get('werkzeug.server.shutdown')
+	if not shutdown:
+		abort(500)
+	shutdown()
+	return '正在关闭服务器...'
+	
 
 
 

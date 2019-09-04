@@ -82,7 +82,18 @@ def delete_post(id):
     flash('文章已删除！', 'success')
     return redirect(url_for('main.index'))
 
-
+'''
+@posts.route("/delete-comment/<int:id>", methods=['POST'])
+@login_required
+def delete_comment(comment_id):
+    comment == Comment.query.get_or_404(comment_id)
+    if post.author != current_user:
+        abort(403)
+    db.session.delete(comment)
+    db.session.commit()
+    flash('评论已删除！', 'success')
+    return redirect_back()
+'''
 
 @posts.route('/collect/<int:id>', methods=['POST'])
 @login_required

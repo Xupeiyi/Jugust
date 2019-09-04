@@ -10,13 +10,14 @@ class Config:
 		['true', 'on', '1']
 	MAIL_USERNAME = os.environ.get('MAIL_USERNAME')
 	MAIL_PASSWORD = os.environ.get('MAIL_PASSWORD')
-	FLASKY_MAIL_SUBJECT_PREFIX = '[Flasky]'
-	FLASKY_MAIL_SENDER = 'Flask Admin <957681460@qq.com>'
-	FLASKY_ADMIN = os.environ.get('FLASKY_ADMIN')
+	JUGUST_MAIL_SUBJECT_PREFIX = '[Jugust]'
+	JUGUST_MAIL_SENDER = 'Jugust Admin <957681460@qq.com>'
+	JUGUST_ADMIN = os.environ.get('JUGUST_ADMIN')
 	SQLALCHEMY_TRACK_MODIFICATIONS = False
-	FLASKY_POSTS_PER_PAGE = 10
-	FLASKY_FOLLOWERS_PER_PAGE = 20
-	FLASKY_COMMENTS_PER_PAGE = 10
+	JUGUST_POSTS_PER_PAGE = 10
+	JUGUST_FOLLOWERS_PER_PAGE = 20
+	JUGUST_COMMENTS_PER_PAGE = 10
+	JUGUST_NOTIFICATION_PER_PAGE = 20
 
 	@staticmethod
 	def init_app(app):
@@ -33,6 +34,8 @@ class TestingConfig(Config):
 	TESTING = True
 	SQLALCHEMY_DATABASE_URI = os.environ.get('TEST_DATABASE_URL') or \
 		'sqlite://'
+	WTF_CSRF_ENABLED = False
+	WTF_CSRF_CHECK_DEFAULT  = False
 
 
 class ProductionConfig(Config):

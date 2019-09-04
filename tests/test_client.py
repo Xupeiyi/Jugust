@@ -56,4 +56,4 @@ class FlaskClientTestCase(unittest.TestCase):
 		self.assertEqual(response.status_code, 200)
 		self.assertTrue('用户已退出。' in response.get_data(as_text=True))
 
-		def 
+		

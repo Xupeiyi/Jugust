@@ -23,14 +23,14 @@
               <ul class="list-group" id="right-navbar">
 						<a class="list-group-item list-group-item-light {% if show_what=='' %}active {% endif %}" href="{{ url_for('main.show_all') }}">全部</a>
 
-				{% if current_user.is_authenticated %}
+
 						<a class="list-group-item list-group-item-light {% if show_what=='show_followed' %}active {% endif %}" href="{{ url_for('main.show_followed') }}">关注</a>
                 	   <a class="list-group-item list-group-item-light  {% if show_what=='show_collected' %}active {% endif %}"  href="{{ url_for('main.show_collected') }}">收藏</a>
                    
                     {% if current_user.can(Permission.WRITE) %}
                 	   <a class="list-group-item list-group-item-light" href="{{ url_for('posts.new_post') }}">写文章</a>
                     {% endif %}
-                {% endif %}
+
               </ul>
             </p>
     </div>

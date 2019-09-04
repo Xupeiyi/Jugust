@@ -20,6 +20,8 @@ def user(username):
     return render_template('/users/user.html', user=user, posts=posts,
 						pagination=pagination)
 
+
+
 @users.route('/edit-profile', methods=['GET', 'POST'])
 @login_required
 def edit_profile():
@@ -63,7 +65,7 @@ def edit_profile_admin(id):
 	form.name.data = user.name
 	form.location.data = user.location
 	form.about_me.data = user.about_me
-	return render_template('/edit_profile.html', form=form, user=user)
+	return render_template('/users/edit_profile.html', form=form, user=user)
 
 
 
