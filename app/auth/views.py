@@ -2,12 +2,12 @@ from flask import render_template, redirect, request, url_for, flash
 from flask_login import login_user,  logout_user,  login_required,  \
 	current_user
 from . import auth
-from .. import db
+from .. import db, mail
 from ..models import User
 from ..email import send_email
 from .forms import LoginForm, RegistrationForm,  ChangePasswordForm, \
 	PasswordResetRequestForm, PasswordResetForm, ChangeEmailForm
-from ..utils import redirect_back
+
 
 @auth.before_app_request
 def before_request():
@@ -16,7 +16,8 @@ def before_request():
 		if (not current_user.confirmed 
 				and request.endpoint
 				and request.blueprint != 'auth'
-				and request.endpoint != 'static'):
+				and request.endpoint != 'static'
+				and request.endpoint != 'main.server_shutdown'):
 			return redirect(url_for('auth.unconfirmed'))
 
 
@@ -61,7 +62,8 @@ def register():
 		db.session.commit()
 		token = user.generate_confirmation_token()
 		send_email(user.email, 'Confirm Your Account',
-					  'auth/email/confirm', user=user, token=token)
+			'auth/email/confirm', user=user, token=token)
+
 		flash('一封确认邮件已经发送至你的电子邮箱。', 'info')
 		return redirect(url_for('main.index'))
 	return render_template('auth/register.html', form=form)

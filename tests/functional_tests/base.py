@@ -3,43 +3,44 @@ import threading
 import time
 import unittest
 from selenium import webdriver
-from app import create_app, db, fake
+from app import create_app, db, mail, fake
 from app.models import Role, User, Post
 
 
-class SeleniumTestCase(unittest.TestCase):
+
+class FunctionalTest(unittest.TestCase):
 	client = None
 
 	@classmethod
 	def setUpClass(cls):
-		#start Chrome
+		#打开Chrome
 		options = webdriver.ChromeOptions()
-		options.add_argument('headless')
+		#options.add_argument('headless')
 		options.add_argument('--no-sandbox')
 		try:
 			cls.client = webdriver.Chrome(options=options)
 		except:
 			pass
 
-		#skip these tests if the browser could not be started
+		#浏览器不能打开就跳过
 		if cls.client:
 			#create the application
 			cls.app = create_app('testing')
 			cls.app_context = cls.app.app_context()
 			cls.app_context.push()
 
-			#suppress logging to keep unittest output clean
+			#关闭日志，使输出简洁
 			import logging
 			logger = logging.getLogger('werkzeug')
 			logger.setLevel('ERROR')
 
-			#create the database and populate with some fake data
+			#数据库输入少量虚拟数据
 			db.create_all()
 			Role.insert_roles()
 			fake.users(10)
 			fake.posts(10)
 
-			#add an admin user
+			#添加管理员john(已确认)
 			admin_role = Role.query.filter_by(permissions=0xff).first()
 			admin = User(email='john@example.com',
 								   username='john', password='cat',
@@ -47,12 +48,19 @@ class SeleniumTestCase(unittest.TestCase):
 			db.session.add(admin)
 			db.session.commit()
 
-			#start the Flask server in a thread
+			#添加普通用户ken(已确认)
+			user = User(email='ken@example.com',
+								 username='ken', password='rat',
+								 confirmed=True)
+			db.session.add(user)
+			db.session.commit()
+
+			#另一个线程中启动服务器
 			cls.server_thread = threading.Thread(target=cls.app.run, 
 																				 kwargs={'debug': False})
 			cls.server_thread.start()
 
-			#give the server a second to ensure it is up
+			time.sleep(1)
 
 
 	@classmethod
@@ -62,11 +70,12 @@ class SeleniumTestCase(unittest.TestCase):
 			cls.client.quit()
 			cls.server_thread.join()
 
-			#destroy database
-			db.drop_all()
+			#销毁数据库
 			db.session.remove()
+			db.drop_all()
+			
 
-			#remove application context
+			#销毁上下文
 			cls.app_context.pop()
 
 	def setUp(self):
@@ -76,26 +85,14 @@ class SeleniumTestCase(unittest.TestCase):
 	def tearDown(self):
 		pass
 
-
-	def test_admin_home_page(self):
-		#进入首页
-		self.client.get('http://localhost:5000/')
-		self.assertTrue(re.search('登录', self.client.page_source))
-
-		#进入登录页面
-		self.client.find_element_by_link_text('登录').click()
-		self.assertIn('<h1>登录</h1>', self.client.page_source)
-
-		#登录
+	def login_john(self):
+		self.client.get('http://localhost:5000/auth/login')
 		self.client.find_element_by_name('email').send_keys('john@example.com')
 		self.client.find_element_by_name('password').send_keys('cat')
 		self.client.find_element_by_name('submit').click()
-		
-		time.sleep(2)
 
-
-		self.assertTrue(re.search('退出', self.client.page_source))
-
-		#进入用户档案页面
-		self.client.find_element_by_link_text('档案').click()
-		self.assertIn('john', self.client.page_source.replace('\n',''))
+	def login_ken(self):
+		self.client.get('http://localhost:5000/auth/login')
+		self.client.find_element_by_name('email').send_keys('ken@example.com')
+		self.client.find_element_by_name('password').send_keys('rat')
+		self.client.find_element_by_name('submit').click()

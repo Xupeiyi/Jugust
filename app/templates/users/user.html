@@ -40,9 +40,9 @@
             <p>
                 {% if current_user.can(Permission.FOLLOW) and user != current_user %}
                     {% if not current_user.is_following(user) %}
-                        <a href="{{ url_for('users.follow', username=user.username) }}" class="btn btn-success">关注</a>
+                        <a id="follow" href="{{ url_for('users.follow', username=user.username) }}" class="btn btn-success">关注</a>
                     {% else %}
-                         <a href="{{ url_for('users.unfollow', username=user.username) }}" class="btn btn-secondary">取消关注</a>
+                         <a id="unfollow" href="{{ url_for('users.unfollow', username=user.username) }}" class="btn btn-secondary">取消关注</a>
                     {% endif %}
                 {% endif %}
        

@@ -60,7 +60,7 @@
 						{% endif %}
 						{% if current_user.is_authenticated %}
 						<li>
-							<a class="nav-item nav-link" href="{{ url_for('main.show_notifications', filter='unread') }}">
+							<a id="notifications" class="nav-item nav-link" href="{{ url_for('main.show_notifications', filter='unread') }}">
 								<span class="oi oi-bell"></span>&nbsp;消息
 								{% if notification_count !=0 %}
 									<span class="badge badge-danger badge-notification">{{ notification_count }}</span>

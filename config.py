@@ -3,6 +3,7 @@ basedir = os.path.abspath(os.path.dirname(__file__))
 
 
 class Config:
+
 	SECRET_KEY = os.environ.get('SECRET_KEY') or 'hard to guess string'
 	MAIL_SERVER = os.environ.get('MAIL_SERVER', 'smtp.qq.com')
 	MAIL_PORT = int(os.environ.get('MAIL_PORT', '587'))
@@ -36,6 +37,7 @@ class TestingConfig(Config):
 		'sqlite://'
 	WTF_CSRF_ENABLED = False
 	WTF_CSRF_CHECK_DEFAULT  = False
+	PRESERVE_CONTEXT_ON_EXCEPTION = False
 
 
 class ProductionConfig(Config):

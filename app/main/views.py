@@ -3,8 +3,8 @@ from flask import render_template, redirect, url_for, abort,flash, request,\
 from flask_login import login_required, current_user
 from . import main
 from .. import db
-from  ..models import Permission, Role, User, Post, Comment, Notification
-from ..utils import admin_required, permission_required, redirect_back
+from  ..models import Permission, User, Post, Comment, Notification
+from ..utils import admin_required, permission_required
 from ..notifications import push_follow_notification
 
 @main.route('/', methods=['GET', 'POST'])
