@@ -83,7 +83,6 @@ def follow(username):
 		return redirect_back()
 
 	current_user.follow(user)
-	db.session.commit()
 	flash('你关注了用户%s。' %username, 'success')
 	push_follow_notification(follower=current_user, receiver=user)
 	return redirect_back()
@@ -101,7 +100,6 @@ def unfollow(username):
 		flash('你没有关注该用户。', 'info')
 		return redirect_back()
 	current_user.unfollow(user)
-	db.session.commit()
 	flash('你取消了对%s的关注。' % username, 'success')
 	return redirect_back()
 

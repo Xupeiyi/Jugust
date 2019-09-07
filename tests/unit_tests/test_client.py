@@ -42,8 +42,6 @@ class FlaskClientTestCase(unittest.TestCase):
 		self.assertTrue('你还没有确认你的账号' in response.get_data(as_text=True))
 
 		#发送令牌确认s
-
-		
 		user = User.query.filter_by(email='john@example.com').first()
 		token = user.generate_confirmation_token()
 		response = self.client.get('/auth/confirm/{}'.format(token),

@@ -60,7 +60,7 @@ class UserTest(FunctionalTest):
 		self.client.get('http://localhost:5000/users/followers/ken')
 		ken_followers_table = self.client.find_element_by_tag_name('table').text
 		self.assertIn('john', ken_followers_table)
-		
+
 		#john取关了ken
 		self.client.get('http://localhost:5000/users/user/ken')
 		self.client.find_element_by_id('unfollow').click()
@@ -83,7 +83,7 @@ class UserTest(FunctionalTest):
 		self.assertNotIn('john', ken_followers_table)
 	
 
-
+'''
 	def test_follow_notifications(self):
 		self.login_john()
 
@@ -106,5 +106,5 @@ class UserTest(FunctionalTest):
 		self.login_john()
 		self.client.get('http://localhost:5000/users/user/ken')
 		self.client.find_element_by_id('unfollow').click()
-
+'''
 

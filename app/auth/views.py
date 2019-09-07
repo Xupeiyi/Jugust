@@ -63,7 +63,6 @@ def register():
 		token = user.generate_confirmation_token()
 		send_email(user.email, 'Confirm Your Account',
 			'auth/email/confirm', user=user, token=token)
-
 		flash('一封确认邮件已经发送至你的电子邮箱。', 'info')
 		return redirect(url_for('main.index'))
 	return render_template('auth/register.html', form=form)
