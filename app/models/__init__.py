@@ -26,15 +26,14 @@ class User(UserMixin, AuthMixin, FollowMixin, CollectMixin, ProfileMixin):
 	
 	posts = db.relationship('Post', backref='author', lazy='dynamic')
 	comments = db.relationship('Comment', backref='author', lazy='dynamic')
-	notifications = db.relationship('Notification', back_populates='receiver', cascade='all')
+	notifications = db.relationship('Notification', back_populates='receiver', cascade='all, delete-orphan')
 
 	@staticmethod
 	def add_self_follows():
 		for user in User.query.all():
 			if not user.is_following(user):
 				user.follow(user)
-				db.session.add(user)
-				db.session.commit()
+
 
 	def __init__(self, **kwargs):
 		super(User, self).__init__(**kwargs)
@@ -90,7 +89,7 @@ class Post(db.Model):
 	body_html = db.Column(db.Text)
 	timestamp = db.Column(db.DateTime, index=True, default=datetime.utcnow)
 	author_id = db.Column(db.Integer, db.ForeignKey('users.id'))
-	comments = db.relationship('Comment', backref='post', lazy='dynamic')
+	comments = db.relationship('Comment', backref='post', lazy='dynamic', cascade='all, delete-orphan')
 	collectors = db.relationship('Collect', back_populates='collected', cascade='all')
 
 	@staticmethod
@@ -117,7 +116,7 @@ class Comment(db.Model):
 	body = db.Column(db.Text)
 	body_html = db.Column(db.Text)
 	timestamp = db.Column(db.DateTime, index=True, default=datetime.utcnow)
-	disabled = db.Column(db.Boolean)
+	disabled = db.Column(db.Boolean, default=False)
 	author_id = db.Column(db.Integer, db.ForeignKey('users.id'))
 	post_id = db.Column(db.Integer, db.ForeignKey('posts.id'))
 

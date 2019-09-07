@@ -61,6 +61,7 @@ class CollectModelTest(ModelTest):
 		db.session.delete(p1)
 		db.session.commit()
 		self.assertTrue(Collect.query.count() == 0)
+		self.assertTrue(u1.collections.__len__() == 0)
 
 	def test_Collect_not_exist_after_collector_deleted(self):
 		u1, p1 = create_u1_p1()
@@ -68,3 +69,4 @@ class CollectModelTest(ModelTest):
 		db.session.delete(u1)
 		db.session.commit()
 		self.assertTrue(Collect.query.count() == 0)
+		self.assertTrue(p1.collectors.__len__() == 0)
